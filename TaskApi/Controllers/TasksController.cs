@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskApi.DTOs;
 using TaskApi.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TaskApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TasksController : ControllerBase
     {
         private readonly TaskService _taskService;

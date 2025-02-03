@@ -20,8 +20,18 @@ RUN dotnet add package Microsoft.EntityFrameworkCore.Sqlite
 # Install Microsoft.EntityFrameworkCore.Design
 RUN dotnet add package Microsoft.EntityFrameworkCore.Design
 
+# Install required authentication & JWT packages
+RUN dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer --version 8.0.2
+RUN dotnet add package Microsoft.IdentityModel.Tokens --version 8.0.2
+
+# Install Data Protection package
+RUN dotnet add package Microsoft.AspNetCore.DataProtection
+
 # Build the project
 RUN dotnet build --no-restore
+
+# Set a default JWT secret key for build-time operations
+ENV JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters"
 
 # Run EF Core migrations to update the database
 RUN dotnet ef database update

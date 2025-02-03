@@ -36,6 +36,11 @@ docker build -t taskapi .
 docker run --rm -it -v $(pwd):/app -p 5000:5000 taskapi
 ```
 
+For JWT Authentication in Program.cs run:
+```bash
+docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
+```
+
 # Setup, Models, DbContext, Controllers, Running:
 1. Install .NET sdk (not needed if you will be using my given Dockerfile => recommended)
 https://learn.microsoft.com/en-us/dotnet/core/install/linux
@@ -143,13 +148,18 @@ docker run --rm -it -v $(pwd):/app -v $(pwd)/data:/root/.dotnet/tools -p 5000:50
 
 => Swagger opens at https://localhost:5000/swagger
 
-when done developing:
-
+# when done developing:
 ```bash
 docker run --rm -it -v $(pwd):/app -p 5000:5000 taskapi
 ```
 
-Transfer permissions:
+For JWT Authentication in Program.cs run:
+```bash
+docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
+```
+
+
+# Transfer permissions to save/modify files:
 
 ls -lah
 
@@ -169,6 +179,64 @@ code .  # Reopen your project
 => Prevent exposing 'Id' field (or other sensitve data), helps mapping data between different layers
 
 12. Create Services Layer (Services/TaskService.cs)=> Separate logic from controllers (TaskControllers.cs), code is reusable, better for testing.
-Need to modify current TaskControllers to use new Services from TaskService.cs
+Need to modify current TaskControllers to use new Services from TaskService.cs (done)
 
-Need to register new TaskService in current Program.cs
+Need to register new TaskService in current Program.cs (done)
+
+# Dependency Injection for Database
+13. Modify Program.cs to make sure db connection properly injected
+
+# Custom Middleware
+14. Create Middleware/CustomMiddleware.cs for handling logging, error handling, or modifying req before reaching controllers (done), register in Program.cs (#13)
+// Logs request body, logs response body, ensures stream positions reset so pipeline cont normally, also tracks time taken for tasks to execute
+
+# JWT Authentication and Authorization
+15. Added JWT Auth in Program.cs, use secret key in Dockerfile run instead of storing inside of program.cs
+docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
+
+Need to do one time: Install required packages for JWT
+Run interactive session
+```bash
+docker run --rm -it -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 /bin/bash
+```
+Then install package versions for JWT Auth:
+```bash
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer --version 8.0.2
+dotnet add package Microsoft.IdentityModel.Tokens --version 8.0.2
+```
+=> Implemented JWT token generation
+
+=> Configured JWT authentication in Program.cs
+
+=> Modified TasksController to require authentication - Protected Routes in TaskController with [authorize]
+
+=> Fixed JWT Secret key issues (32 chars + pass as env variable when running as docker cmd: docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi)
+
+=> Fixed data protection warnings about persistent encryption keys only in production 
+- ensure persistent key storage in Docker by mounting volume when running: docker run --rm -it -v $(pwd)/data-protection:/app/DataProtection-Keys -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
+
+# Cors
+16. For now CORS allows all origins, methods, and headers (modify later)
+
+<!-- 2️⃣ Add Custom Middleware
+Middleware helps handle logging, error handling, or modifying requests before they reach controlle -->
+
+<!-- 4️⃣ CORS (Will Enable Fully Later for Frontend)
+For now, allow all requests (we will refine this when the fronte -->
+
+
+
+=======> add Role-Based Authorization (RBAC) using JWT claims next 
+
+
+
+
+
+
+
+
+
+to run 
+
+docker build --no-cache -t taskapi .
+docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
