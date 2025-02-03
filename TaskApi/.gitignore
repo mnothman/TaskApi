@@ -1,0 +1,49 @@
+# Build and output folders
+bin/
+obj/
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs and databases
+logs/
+*.log
+*.sqlite
+*.db
+
+# ASP.NET Core secrets
+appsettings.Development.json
+appsettings.Local.json
+
+# Dotnet dependencies
+*.dll
+*.exe
+*.pdb
+*.cache
+*.pidb
+*.ilk
+*.ipch
+*.obj
+*.o
+*.so
+*.idb
+
+# Entity Framework migrations and generated files
+Migrations/
+
+# Rider and JetBrains IDEs
+.idea/
+*.sln.iml
+
+# macOS and Linux system files
+.DS_Store
+*.swp
+*.swo
+
+# Docker files
+docker-compose.override.yml
+.env
