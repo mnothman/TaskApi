@@ -47,3 +47,6 @@ Migrations/
 # Docker files
 docker-compose.override.yml
 .env
+
+# Persistent key storage
+DataProtection-Keys
