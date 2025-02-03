@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TaskApi.Data;
+using TaskApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// For TaskService (need to register in dependency injection):
+builder.Services.AddScoped<TaskService>();
+
+// Build after registering above dependencies
 var app = builder.Build();
 
 // Enable Swagger UI for API documentation in development mode

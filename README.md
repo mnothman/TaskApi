@@ -30,6 +30,13 @@ Secure API with Authentication and CORS
 Implement logging and testing
 
 
+# After edits done: rebuild and run API
+```bash
+docker build -t taskapi .
+docker run --rm -it -v $(pwd):/app -p 5000:5000 taskapi
+```
+
+# Setup, Models, DbContext, Controllers, Running:
 1. Install .NET sdk
 https://learn.microsoft.com/en-us/dotnet/core/install/linux
 
@@ -145,3 +152,14 @@ maybe restart vscode
 
 exit  # If you're inside Docker, exit first
 code .  # Reopen your project
+
+
+
+# DTOs and Service Layer
+11. Create DTOs/TaskDTO.cs => controls what data is sent and recieved by API, prevents exposing sensitive fields & allows for more structured API responses 
+=> Prevent exposing 'Id' field (or other sensitve data), helps mapping data between different layers
+
+12. Create Services Layer (Services/TaskService.cs)=> Separate logic from controllers (TaskControllers.cs), code is reusable, better for testing.
+Need to modify current TaskControllers to use new Services from TaskService.cs
+
+Need to register new TaskService in current Program.cs
