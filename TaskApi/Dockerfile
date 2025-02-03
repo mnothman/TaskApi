@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 # Install dotnet-ef tool globally
 RUN dotnet tool install --global dotnet-ef
-ENV PATH="$PATH:/root/.dotnet/tools"
+ENV PATH="/root/.dotnet/tools:$PATH"
 
 # Set working directory
 WORKDIR /app

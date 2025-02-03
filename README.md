@@ -37,7 +37,7 @@ docker run --rm -it -v $(pwd):/app -p 5000:5000 taskapi
 ```
 
 # Setup, Models, DbContext, Controllers, Running:
-1. Install .NET sdk
+1. Install .NET sdk (not needed if you will be using my given Dockerfile => recommended)
 https://learn.microsoft.com/en-us/dotnet/core/install/linux
 
 I am using Docker container for .NET environment since my fedora 37 isn't supported
@@ -46,12 +46,12 @@ Ensure that Docker is installed
 
 2. Run terminal inside .NET container (I am running mounted volume so I can work on files in local system)
 
-Mounted volume:
+Mounted volume: (use mounted volume to run docker terminal)
 ```bash
 docker run --rm -it -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 /bin/bash
 ```
 
-Non mounted volume:
+Non mounted volume (can use after setup is complete, for now use mounted volume):
 ```bash
 docker run --rm -it mcr.microsoft.com/dotnet/sdk:8.0 /bin/bash
 ```
@@ -73,16 +73,23 @@ cd TaskApi
 
 8. Create Task Controller (TasksControllers.cs) inside created Controllers/ directory. Has CRUD endpoints (GET tasks => get all tasks, GET tasks/id => Get single task with id, POST task => Create new task, PUT tasks/id => Update task with id, DELETE tasks/id => Delete a task with id)
 
-9. Apply Database Migrations
+9. Apply Database Migrations (Should only need to do once, persists from Dockerfile line: ENV PATH="/root/.dotnet/tools:$PATH"
+)
 
-Create Tasks table in DB:
+# Create Tasks table in DB (if doesn't work, see below):
 ```bash
 dotnet ef migrations add InitialCreate
 dotnet ef database update
 ```
-<!-- 
+Fixing errors:
 (Might need to install dotnet.ef tool and add to path):
-Inside container install dotnet.ef run:
+
+To run docker container terminal: inside of TaskApi dir run: 
+```bash
+docker run --rm -it -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 /bin/bash
+```
+
+Inside docker container install dotnet.ef run:
 ```bash
 dotnet tool install --global dotnet-ef
 ```
@@ -94,23 +101,25 @@ Confirm installation is working:
 ```bash
 dotnet ef --version
 ```
- -->
-<!-- (Might need to install Microsoft.EntityFrameworkCore.Design in local terminal OUTSIDE of docker terminal ):
+
+(Might need to install Microsoft.EntityFrameworkCore.Design in local terminal INSIDE of docker container terminal):
 ```bash
 dotnet add package Microsoft.EntityFrameworkCore.Design
 ```
 Check installation:
 ```bash
 dotnet list package
-``` -->
-<!-- 
-Finally after installing, retry these two:
+```
+
+Finally after installing, retry these two INSIDE of docker container terminal:
 ```bash
 dotnet ef migrations add InitialCreate
 dotnet ef database update
-``` -->
+```
 
 Containers reset when restarted, so need to nodify Dockerfile to install dotnet-ef when container starts, or use persistent volume for db files
+
+------------------------------------------
 
 10. Run & Test API:
 <!-- 
