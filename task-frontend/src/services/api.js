@@ -9,9 +9,15 @@ export const apiClient = axios.create({
     headers: { "Content-Type": "application/json" },
   });
 
-
+// Get tasks with authentication token
   export const getTasks = async (token) => {
-    return apiClient.get("tasks", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      const response = await apiClient.get("tasks", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching tasks:", error.response?.data || error);
+      throw error;
+    }
   };

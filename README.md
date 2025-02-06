@@ -255,7 +255,31 @@ If no tasks show, manually insert:
 INSERT INTO Tasks (Title, Description, Status, DueDate) VALUES ('Test Task', 'This is a test', 'Pending', '2025-12-31');
 
 
-=> TODO: add authentication in Vue w/ JWT tokens
+18. Finish setting up frontend and connecting to backend
+
+-Set up API authentication in src/services/api.js
+
+-Modify Task.vue to fetch tasks using JWT token
+
+-App.vue now includes TaskView
+
+=> Manually test setting token in developer console:
+i.
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+-H "Content-Type: application/json" \
+-d '{"username": "admin", "password": "password"}'
+```
+ii.
+Open dev tools -> console -> paste this with token in here
+```bash
+localStorage.setItem("token", "your_jwt_token_here");
+```
+
+(can check if went through in -> application -> local storage -> http://localhost:5173 -> token (should be here))
+
+
+
 
 
 
@@ -275,7 +299,7 @@ paste token inside YOUR_TOKEN_HERE
 
 curl -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:5000/api/tasks
 
-
+![Image](https://github.com/user-attachments/assets/9eab41eb-0911-4e34-8482-8ff4802a0591)
 
 
 runs on http://127.0.0.1:5000/swagger/index.html
