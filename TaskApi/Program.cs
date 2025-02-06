@@ -45,10 +45,12 @@ builder.Services.AddAuthorization();
 // Cors FOR NOW WE WILL ALLOW ALL REQUESTS, CHANGE AFTER (Config this later when add frontend 1/2)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Vue, React Dev Servers
               .AllowAnyMethod()
+              .AllowCredentials()
               .AllowAnyHeader();
     });
 });
@@ -96,7 +98,7 @@ app.UseAuthorization();
 
 // Enable Cors (config this later when add frontend 2/2)
 // app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 // Map Controller Endpoints
 app.MapControllers();

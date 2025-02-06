@@ -218,25 +218,24 @@ dotnet add package Microsoft.IdentityModel.Tokens --version 8.0.2
 # Cors
 16. For now CORS allows all origins, methods, and headers (modify later)
 
-<!-- 2️⃣ Add Custom Middleware
-Middleware helps handle logging, error handling, or modifying requests before they reach controlle -->
-
-<!-- 4️⃣ CORS (Will Enable Fully Later for Frontend)
-For now, allow all requests (we will refine this when the fronte -->
-
-
-
 =======> add Role-Based Authorization (RBAC) using JWT claims next 
+=======> add frontend and modify cors accordingly
 
 
+# Frontend
+17. Created Vue frontend
+=> Changes CORS settings in program.cs to allow frontend
 
+=> Created Services/api.js in Vue project for API url
 
+=> Use .env for api url
 
-
-
-
+=> TODO: add authentication in Vue w/ JWT tokens
 
 to run 
 
 docker build --no-cache -t taskapi .
 docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
+
+
+runs on http://127.0.0.1:5000/swagger/index.html
