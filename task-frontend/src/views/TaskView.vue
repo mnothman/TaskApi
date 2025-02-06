@@ -1,15 +1,16 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { apiClient } from "@/services/api.js";
+import { apiClient } from "../services/api.js";
 
 const tasks = ref([]);
 
 const fetchTasks = async () => {
   try {
     const response = await apiClient.get("tasks"); // Auto-uses API_URL
+    console.log("API Response:", response.data);
     tasks.value = response.data;
   } catch (error) {
-    console.error("Error fetching tasks:", error);
+    console.error("Error fetching tasks:", error.response?.data || error.message);
   }
 };
 

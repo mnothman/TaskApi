@@ -230,12 +230,62 @@ dotnet add package Microsoft.IdentityModel.Tokens --version 8.0.2
 
 => Use .env for api url
 
+=> Might need to install sqlite3 inside of docker container
+i. Run frontend: docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
+
+ii. docker ps
+
+Take container id from docker ps and put in below
+iii. docker exec -it <container_id> /bin/sh
+
+iv. check if db exists:
+ls -l taskdb.sqlite
+
+v: check if Tasks table has data
+sqlite3 taskdb.sqlite
+
+=> if sqlite error run this currently where you are inside docker:
+
+```bash
+apt update && apt install -y sqlite3
+```
+
+vi: Then run: SELECT * FROM Tasks;
+If no tasks show, manually insert: 
+INSERT INTO Tasks (Title, Description, Status, DueDate) VALUES ('Test Task', 'This is a test', 'Pending', '2025-12-31');
+
+
 => TODO: add authentication in Vue w/ JWT tokens
+
+
 
 to run 
 
 docker build --no-cache -t taskapi .
 docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
+<!-- docker run --rm -it -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi -->
+
+
+to get token:
+curl -X POST http://localhost:5000/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username": "admin", "password": "password"}'
+
+paste token inside YOUR_TOKEN_HERE
+
+curl -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:5000/api/tasks
+
+
 
 
 runs on http://127.0.0.1:5000/swagger/index.html
+
+
+---------------
+To get JWT secret:
+
+docker exec -it <container_id> /bin/sh
+
+echo $JwtSettings__Secret
+
+---------------

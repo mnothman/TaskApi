@@ -21,7 +21,12 @@ namespace TaskApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TaskDTO>>> GetTasks()
         {
+            var username = User.Identity?.Name ?? "Unknown";
+            Console.WriteLine($"Authenticated request from: {username}");
+
             var tasks = await _taskService.GetAllTasksAsync();
+            Console.WriteLine($"Returning {tasks.Count} tasks");
+
             return Ok(tasks);
         }
 

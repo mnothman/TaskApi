@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace TaskApi.Controllers
 {
@@ -31,6 +32,7 @@ namespace TaskApi.Controllers
         private string GenerateJwtToken(string username)
         {
             var key = _configuration["JwtSettings:Secret"];
+            Console.WriteLine($"Using JWT Secret: {key}");
             if (string.IsNullOrEmpty(key) || key.Length < 32)
                 throw new ArgumentException("JWT Secret must be at least 32 characters long!");
 
@@ -39,8 +41,8 @@ namespace TaskApi.Controllers
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, username),
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -48,6 +50,10 @@ namespace TaskApi.Controllers
                 expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: credentials
             );
+            
+            // remove these two lines after testing
+            // var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            // Console.WriteLine($"Generated Token: {tokenString}"); // Log the token string
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

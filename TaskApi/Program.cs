@@ -35,22 +35,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ValidateLifetime = true
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"JWT Authentication Failed: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                Console.WriteLine("JWT Challenge Triggered");
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                var token = context.Token ?? "(No token received)";
+                Console.WriteLine($"JWT Token Received: {context.Token}");
+                return Task.CompletedTask;
+            }
         };
     });
 
 // Authorization
 builder.Services.AddAuthorization();
 
-// Cors FOR NOW WE WILL ALLOW ALL REQUESTS, CHANGE AFTER (Config this later when add frontend 1/2)
+// Enable CORS (1/2)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Vue, React Dev Servers
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Vite dev server
               .AllowAnyMethod()
-              .AllowCredentials()
               .AllowAnyHeader();
     });
 });
@@ -96,8 +114,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Enable Cors (config this later when add frontend 2/2)
-// app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+// Enable CORS (2/2)
 app.UseCors("AllowFrontend");
 
 // Map Controller Endpoints
