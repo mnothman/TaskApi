@@ -25,39 +25,35 @@ builder.Services.AddScoped<TaskService>();
 // Authentication (JWT Authentication) => JWT Secret is passed as env variable in docker run command
 var jwtKey = builder.Configuration["JwtSettings:Secret"] ?? throw new ArgumentNullException("JWT Secret is missing!");
 
+// modify JWT authentication to read token from HttpOnly cookie, ASP.NET Core by default reads token from Authorization header so we tell it to read from cookie instead
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false;
+        options.RequireHttpsMetadata = false; // Only disabled for local development for now
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true
+            ValidateAudience = false
         };
+        
+        // allow the token to be read from cookies
         options.Events = new JwtBearerEvents
         {
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine($"JWT Authentication Failed: {context.Exception.Message}");
-                return Task.CompletedTask;
-            },
-            OnChallenge = context =>
-            {
-                Console.WriteLine("JWT Challenge Triggered");
-                return Task.CompletedTask;
-            },
             OnMessageReceived = context =>
             {
-                var token = context.Token ?? "(No token received)";
-                Console.WriteLine($"JWT Token Received: {context.Token}");
+                if (context.Request.Cookies.ContainsKey("AuthToken"))
+                {
+                    context.Token = context.Request.Cookies["AuthToken"]; // Get token from cookie
+                }
                 return Task.CompletedTask;
             }
         };
     });
+
+
 
 // Authorization
 builder.Services.AddAuthorization();
@@ -69,7 +65,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:5173") // Vite dev server
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 

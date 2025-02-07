@@ -304,7 +304,24 @@ curl -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:5000/api/tasks
 
 runs on http://127.0.0.1:5000/swagger/index.html
 
+----------------------------
 
+19. Setting up JWT token with logins
+
+=> first had to edit Login in AuthController to return JWT token as cookie instead of 
+response body and storing in local storage -> which is not as safe
+
+=> Modify Program.cs to extract JWT from cookies, since by default it gets it from Authorization headers which we don't want to do
+
+=> Modify services/api.js to not need manual token passed anymore
+
+=> Add Login : Logout for storing : clearing JWT token in cookies in services/api.js
+
+=> Now that JWT is set up so that cookies are sent automatically, removed manually passing authorization headers, added login() and logout() to handle authentication, getTasks() no longer needs token as an argument
+=> We now can modify TaskView.vue to login/logout, and axios automatically includes JWT cookies on request, logout clears cookie and user sessions
+
+=> Not using vue router, so just include login/logout/task fetching all in TaskView.vue
+=> Need .AllowCredentials() in Program.cs CORS configuration builder.Services.AddCors() to allow credentials (cookies, authorization headers, ...), and app.UseCors("AllowFrontend");, also need 'withCredentials: true' in api.js
 ---------------
 To get JWT secret:
 
