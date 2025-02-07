@@ -30,6 +30,8 @@ RUN dotnet add package Microsoft.AspNetCore.DataProtection
 # Fix JWT error
 RUN dotnet add package System.IdentityModel.Tokens.Jwt --version 8.3.1
 
+# Rate limiting only needed for .NET 6 and below
+# RUN dotnet add package Microsoft.AspNetCore.RateLimiting
 
 # Build the project
 RUN dotnet build --no-restore

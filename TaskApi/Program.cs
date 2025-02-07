@@ -7,8 +7,27 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using System.IO;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add rate limiting, completed for get task and create task
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("get-tasks", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 20; 
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+    });
+
+    options.AddFixedWindowLimiter("create-task", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 5;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+    });
+});
+
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "DataSource=taskdb.sqlite";
 
@@ -107,6 +126,10 @@ if (app.Environment.IsDevelopment())
 // Middleware for logging and error handling
 app.UseMiddleware<CustomMiddleware>();
 
+// Enable rate limiting globally, this is only for global limiting only (don't use we fine tuned get-task and create-task)
+// app.UseRateLimiter();
+
+// Standard
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

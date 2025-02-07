@@ -19,6 +19,7 @@ namespace TaskApi.Controllers
 
         // GET: api/tasks
         [HttpGet]
+        [EnableRateLimiting("get-tasks")]
         public async Task<ActionResult<IEnumerable<TaskDTO>>> GetTasks()
         {
             var username = User.Identity?.Name ?? "Unknown";
@@ -41,6 +42,7 @@ namespace TaskApi.Controllers
 
         // POST: api/tasks
         [HttpPost]
+        [EnableRateLimiting("create-task")]
         public async Task<ActionResult<TaskDTO>> CreateTask(TaskDTO taskDto)
         {
             var createdTask = await _taskService.CreateTaskAsync(taskDto);

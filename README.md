@@ -381,6 +381,22 @@ npm install pinia-plugin-persistedstate
 => Modify main.js to enable Pinia persistence "pinia.use(piniaPersist);"
 
 
+24. Rate limiting for API (did it for create task and get tasks)
+(Could use advanced rate limiting features from AspNetCoreRateLimit such as IP limits or user limits, for now just do built in .NET limiting)
+
+=> (ONLY NEEDED FOR .NET 6 AND BELOW) Add dotnet add package Microsoft.AspNetCore.RateLimiting in Dockerfile
+
+=> Modify Program.cs to configure rate limiting "builder.Services.AddRateLimiter" & "app.UseRateLimiter();"
+
+=> Apply configured rate limiting in controllers. Ex. "TasksController.cs" apply [EnableRateLimiting]
+
+Test rate limiting:
+For GetTasks()
+for i in {1..15}; do curl -X GET http://localhost:5000/api/tasks; echo ""; done
+
+For CreateTask()
+for i in {1..15}; do curl -X POST -H "Content-Type: application/json" -d '{"title": "New Task"}' http://localhost:5000/api/tasks; echo ""; done
+
 ---------------
 To get JWT secret:
 
