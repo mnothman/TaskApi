@@ -78,6 +78,16 @@ namespace TaskApi.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        [HttpGet("check")]
+        public IActionResult CheckAuth()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return Ok(new { isAuthenticated = true });
+            }
+            return Unauthorized(new { isAuthenticated = false });
+        }
     }
     public class LoginRequest
     {

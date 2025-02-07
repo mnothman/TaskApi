@@ -285,6 +285,14 @@ localStorage.setItem("token", "your_jwt_token_here");
 
 to run 
 
+frontend: npm run dev
+
+backend:
+docker build --no-cache -t taskapi .
+docker run --rm -it -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi 
+
+
+
 docker build --no-cache -t taskapi .
 docker run --rm -it -v $(pwd):/app -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi
 <!-- docker run --rm -it -p 5000:5000 -e JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!" taskapi -->
@@ -306,7 +314,7 @@ runs on http://127.0.0.1:5000/swagger/index.html
 
 ----------------------------
 
-19. Setting up JWT token with logins
+19. Setting up JWT token with logins automatically instead of manually
 
 => first had to edit Login in AuthController to return JWT token as cookie instead of 
 response body and storing in local storage -> which is not as safe
@@ -322,6 +330,57 @@ response body and storing in local storage -> which is not as safe
 
 => Not using vue router, so just include login/logout/task fetching all in TaskView.vue
 => Need .AllowCredentials() in Program.cs CORS configuration builder.Services.AddCors() to allow credentials (cookies, authorization headers, ...), and app.UseCors("AllowFrontend");, also need 'withCredentials: true' in api.js
+
+=> Default login is admin : password
+
+20. Storing auth state using Pinia
+Current flow to be changes: 
+Backend: JWT authentication -> JWT sent as HTTP only cookie when logging in -> cookie automatically included in requests
+Frontend: API requests use withCredentials: true so browser automatically sends JWT cookie with each requests, no state management yet for authentication status
+
+TODO:
+Need state management to store and manage JWT token in memory instead of local storage
+Components can access user info without redundant api calls (gives global access)
+App UI updates automatically (at login/logout/etc)
+Better security, prevents XSS atks
+
+21. Implement Vue router
+=> Added router vue 'npm install vue-router@4' 
+-Created src/router/index.js 
+-Modify main.js to include Vue router
+-Modify App.vue to include <router-view>
+
+Change TaskView to not be single page, and created LoginView.vue separate from TaskView.vue
+
+Update TaskView to check authentication, ensure that authenticated users can only see tasks
+
+
+
+22. Implementing Pinia
+=> Modify main.js to include Pinia
+
+=> Added router vue 'npm install vue-router@4' 
+Created src/router/index.js 
+Modify main.js to include Vue router
+
+
+=> Create Pinia store to manage authentication state new 'store/auth.js'
+The state managements are the login, logout, fetching user 
+
+=> 'services/api.js' already has 'withCredentials: true' from 19. storing jwt 
+
+=> create 'src/views/LoginView.vue' for login form
+
+
+23. Persistent states
+
+npm install pinia-plugin-persistedstate
+
+=> Modify auth.js to use persistent states 'persist: { ...}
+
+=> Modify main.js to enable Pinia persistence "pinia.use(piniaPersist);"
+
+
 ---------------
 To get JWT secret:
 
