@@ -18,6 +18,7 @@ logs/
 # ASP.NET Core secrets
 appsettings.Development.json
 appsettings.Local.json
+appsettings.json
 
 # Dotnet dependencies
 *.dll

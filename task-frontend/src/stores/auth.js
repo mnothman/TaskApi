@@ -16,6 +16,8 @@ export const useAuthStore = defineStore("auth", {
         
         if (this.isAuthenticated) {
           console.log("Login successful! Redirecting...");
+        } else {
+          console.error("Login failed: Token not stored properly.");
         }
       } catch (error) {
         console.error("Login failed:", error.response?.data || error);

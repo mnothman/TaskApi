@@ -19,5 +19,6 @@ namespace TaskApi.Data
         }
 
         public DbSet<TaskModel> Tasks { get; set; }
+        public DbSet<UserModel> Users { get; set; } // Add User model to DB
     }
 }

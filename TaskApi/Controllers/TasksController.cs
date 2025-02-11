@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace TaskApi.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     [Authorize]
+    [ApiController]
+    [Route("api/[controller]")]
     public class TasksController : ControllerBase
     {
         private readonly TaskService _taskService;
@@ -21,11 +21,36 @@ namespace TaskApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TaskDTO>>> GetTasks()
         {
+            var identity = User.Identity;
+            Console.WriteLine($"🔎 Identity Name: {identity?.Name}");
+            Console.WriteLine($"✅ Is Authenticated: {identity?.IsAuthenticated}");
+
+            var token = Request.Cookies["AuthToken"];
+            Console.WriteLine($"📌 Received AuthToken in /api/tasks: {token}");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("❌ No AuthToken received!");
+                return Unauthorized(new { message = "Missing authentication token" });
+            }
+
+            if (!User.Identity.IsAuthenticated)
+            {
+                Console.WriteLine("❌ User is NOT authenticated according to User.Identity!");
+                return Unauthorized(new { message = "User is not authenticated" });
+            }
+
             var username = User.Identity?.Name ?? "Unknown";
-            Console.WriteLine($"Authenticated request from: {username}");
+            Console.WriteLine($"✅ Authenticated request from: {username}");
+            Console.WriteLine($"✅ User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
+
+            if (!User.Identity.IsAuthenticated)
+            {
+                return Unauthorized(new { message = "User not authenticated" });
+            }
 
             var tasks = await _taskService.GetAllTasksAsync();
-            Console.WriteLine($"Returning {tasks.Count} tasks");
+            Console.WriteLine($"📌 Returning {tasks.Count} tasks");
 
             return Ok(tasks);
         }

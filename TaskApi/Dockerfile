@@ -14,8 +14,11 @@ COPY . .
 # Restore dependencies
 RUN dotnet restore
 
-# Install Microsoft.EntityFrameworkCore.Sqlite
-RUN dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+# Install PostgreSQL support for Entity Framework
+RUN dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+
+# BCrypt error fix
+RUN dotnet add package BCrypt.Net-Next
 
 # Install Microsoft.EntityFrameworkCore.Design
 RUN dotnet add package Microsoft.EntityFrameworkCore.Design
@@ -27,20 +30,23 @@ RUN dotnet add package Microsoft.IdentityModel.Tokens --version 8.3.1
 # Install Data Protection package
 RUN dotnet add package Microsoft.AspNetCore.DataProtection
 
+# Install email libraries
+RUN dotnet add package MimeKit
+RUN dotnet add package MailKit
+
+# Install DotNetEnv for Environment Variables
+RUN dotnet add package DotNetEnv
+
 # Fix JWT error
 RUN dotnet add package System.IdentityModel.Tokens.Jwt --version 8.3.1
 
-# Rate limiting only needed for .NET 6 and below
-# RUN dotnet add package Microsoft.AspNetCore.RateLimiting
+COPY .env /app/.env
 
 # Build the project
 RUN dotnet build --no-restore
 
 # Set a default JWT secret key for build-time operations
 ENV JwtSettings__Secret="YourVeryStrongSecretKeyWithAtLeast32Characters!"
-
-# Run EF Core migrations to update the database
-RUN dotnet ef database update
 
 # Start the app
 ENTRYPOINT ["dotnet", "run"]

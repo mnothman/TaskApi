@@ -12,27 +12,24 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add rate limiting, completed for get task and create task
+DotNetEnv.Env.Load();
+
+// Rate limiting
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("get-tasks", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 20; 
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-    });
-
-    options.AddFixedWindowLimiter("create-task", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 5;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-    });
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            key => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1)
+            }));
 });
 
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "DataSource=taskdb.sqlite";
-
+// Use PostgreSQL instead of SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // For TaskService (need to register in dependency injection):
 builder.Services.AddScoped<TaskService>();
@@ -43,36 +40,121 @@ builder.Services.AddScoped<TaskService>();
 
 // Authentication (JWT Authentication) => JWT Secret is passed as env variable in docker run command
 var jwtKey = builder.Configuration["JwtSettings:Secret"] ?? throw new ArgumentNullException("JWT Secret is missing!");
+Console.WriteLine($"🔑 JWT Secret Loaded: {jwtKey}");
 
 // modify JWT authentication to read token from HttpOnly cookie, ASP.NET Core by default reads token from Authorization header so we tell it to read from cookie instead
+// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//     .AddJwtBearer(options =>
+//     {
+//         options.RequireHttpsMetadata = false; // Only disabled for local development for now
+//         options.SaveToken = true;
+//         options.TokenValidationParameters = new TokenValidationParameters
+//         {
+//             ValidateIssuerSigningKey = true,
+//             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+//             ValidateIssuer = false,
+//             ValidateAudience = false,
+//             ValidateLifetime = true,
+//             ClockSkew = TimeSpan.Zero
+//         };
+        
+        // allow the token to be read from cookies
+        // options.Events = new JwtBearerEvents
+        // {
+        //     OnMessageReceived = context =>
+        //     {
+        //         var tokenFromCookie = context.Request.Cookies.ContainsKey("AuthToken") ? context.Request.Cookies["AuthToken"] : null;
+        //         Console.WriteLine($"📌 Debug: Token from Cookie: {tokenFromCookie}");
+
+        //         var tokenFromHeader = context.Request.Headers.ContainsKey("Authorization") ? context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "") : null;
+        //         Console.WriteLine($"📌 Debug: Token from Header: {tokenFromHeader}");
+
+        //         if (!string.IsNullOrEmpty(tokenFromCookie))
+        //         {
+        //             context.Token = tokenFromCookie;
+        //         }
+        //         else if (!string.IsNullOrEmpty(tokenFromHeader))
+        //         {
+        //             context.Token = tokenFromHeader;
+        //         }
+
+        //         Console.WriteLine($"📌 Final Token Being Used: {context.Token}");
+
+        //         return Task.CompletedTask;
+        //     }
+        // };
+
+
+        // options.Events = new JwtBearerEvents
+        // {
+        //     OnMessageReceived = context =>
+        //     {
+        //         if (context.Request.Cookies.ContainsKey("AuthToken"))
+        //         {
+        //             context.Token = context.Request.Cookies["AuthToken"]; // Get token from cookie
+        //             Console.WriteLine($"📌 Debug: Retrieved token from cookie: {context.Token}");
+        //         }
+
+        //         if (string.IsNullOrEmpty(context.Token) && context.Request.Headers.ContainsKey("Authorization"))
+        //         {
+        //             context.Token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        //         }
+
+        //         return Task.CompletedTask;
+        //     }
+        // };
+
+
+
+// var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]);
+var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false; // Only disabled for local development for now
-        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            IssuerSigningKey = new SymmetricSecurityKey(key),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
         };
-        
-        // allow the token to be read from cookies
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                if (context.Request.Cookies.ContainsKey("AuthToken"))
+                var token = context.Request.Cookies["AuthToken"];
+                if (!string.IsNullOrEmpty(token))
                 {
-                    context.Token = context.Request.Cookies["AuthToken"]; // Get token from cookie
+                    context.Token = token;
+                    Console.WriteLine($"📌 Debug: Retrieved token from cookie: {context.Token}");
                 }
                 return Task.CompletedTask;
             }
         };
     });
 
+// Bind Email Settings from Environment Variables
+// Load environment variables (for Docker)
+builder.Configuration["EmailSettings:SmtpHost"] = Environment.GetEnvironmentVariable("SMTP_HOST") 
+    ?? builder.Configuration["EmailSettings:SmtpHost"];
 
+builder.Configuration["EmailSettings:SmtpPort"] = Environment.GetEnvironmentVariable("SMTP_PORT") 
+    ?? builder.Configuration["EmailSettings:SmtpPort"];
+
+builder.Configuration["EmailSettings:SmtpUser"] = Environment.GetEnvironmentVariable("SMTP_USER") 
+    ?? builder.Configuration["EmailSettings:SmtpUser"];
+
+builder.Configuration["EmailSettings:SmtpPass"] = Environment.GetEnvironmentVariable("SMTP_PASS") 
+    ?? builder.Configuration["EmailSettings:SmtpPass"];
+
+builder.Configuration["EmailSettings:FromEmail"] = Environment.GetEnvironmentVariable("FROM_EMAIL") 
+    ?? builder.Configuration["EmailSettings:FromEmail"];
+
+builder.Configuration["EmailSettings:FromName"] = Environment.GetEnvironmentVariable("FROM_NAME") 
+    ?? builder.Configuration["EmailSettings:FromName"];
 
 // Authorization
 builder.Services.AddAuthorization();
@@ -124,20 +206,30 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 // Middleware for logging and error handling
-app.UseMiddleware<CustomMiddleware>();
+// app.UseMiddleware<CustomMiddleware>();
 
-// Enable rate limiting globally, this is only for global limiting only (don't use we fine tuned get-task and create-task)
-// app.UseRateLimiter();
+// // Rate limiting
+// app.UseRateLimiter(); // Enables IP based rate limiting
+
+app.UseHttpsRedirection();
+
+
 
 // Standard
-app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Enable CORS (2/2)
 app.UseCors("AllowFrontend");
 
-// Map Controller Endpoints
+app.UseMiddleware<CustomMiddleware>();
+
+
+// Rate limiting
+app.UseRateLimiter(); // Enables IP based rate limiting
+
+// Map Controller Endpoints, has to be after Authentication and Authorization
 app.MapControllers();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
